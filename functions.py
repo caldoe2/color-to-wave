@@ -1,23 +1,43 @@
 from math import *
 import pygame
 from settings import *
-
+import numpy as np
 # functions
 def WavesToColor(n, m):
-    from math import sin, pi
+    rolling_fft.push(n)
 
-    a = 5 * pi * n / (3 * m) + pi / 2
+    # Compute FFT magnitudes
+    magnitudes = rolling_fft.compute_fft_magnitudes()
 
-    r = sin(a) * 192 + 128
-    r = int(max(0, min(255, r)))
+    # Use magnitudes of specific frequency components to determine RGB.
+    r = int(200 * magnitudes[1] / max(magnitudes))
+    g = int(255 * magnitudes[2] / max(magnitudes))
+    b = int(255 * magnitudes[3] / max(magnitudes))
 
-    g = sin(a -2 * pi / 3) * 192 + 128
-    g = int(max(0, min(255, g)))
-
-    b = sin(a - 4 * pi / 3) * 192 + 128
-    b = int(max(0, min(255, b)))
+    # Ensure RGB values are within [0, 255]
+    r = max(0, min(255, r))
+    g = max(0, min(255, g))
+    b = max(0, min(255, b))
 
     return (r, g, b)
+
+class RollingFFT:
+    def __init__(self, size):
+        self.size = size
+        self.buffer = [0] * size
+
+    def push(self, value):
+        self.buffer.pop(0)
+        self.buffer.append(value)
+
+    def compute_fft_magnitudes(self):
+        centered_samples = [sample - np.mean(self.buffer) for sample in self.buffer]
+
+        fft_values = np.fft.fft(self.buffer)
+        magnitudes = np.abs(fft_values)
+        return magnitudes
+rolling_fft = RollingFFT(100)
+
 # classes
 class wave_subsection():
     def __init__(self, width, height, amplitudeModifier, wavelengthModifier, wavetype):
