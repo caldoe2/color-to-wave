@@ -10,7 +10,7 @@ def WavesToColor(n, m):
     magnitudes = rolling_fft.compute_fft_magnitudes()
 
     # Use magnitudes of specific frequency components to determine RGB.
-    r = int(200 * magnitudes[1] / max(magnitudes))
+    r = int(255 * magnitudes[1] / max(magnitudes))
     g = int(255 * magnitudes[2] / max(magnitudes))
     b = int(255 * magnitudes[3] / max(magnitudes))
 
@@ -25,18 +25,17 @@ class RollingFFT:
     def __init__(self, size):
         self.size = size
         self.buffer = [0] * size
-
     def push(self, value):
         self.buffer.pop(0)
         self.buffer.append(value)
 
     def compute_fft_magnitudes(self):
         centered_samples = [sample - np.mean(self.buffer) for sample in self.buffer]
-
-        fft_values = np.fft.fft(self.buffer)
+        fft_values = np.fft.fft(centered_samples)
         magnitudes = np.abs(fft_values)
         return magnitudes
-rolling_fft = RollingFFT(100)
+rolling_fft = RollingFFT(rolling_fft_int)
+
 
 # classes
 class wave_subsection():
@@ -146,13 +145,11 @@ class DrawableSubsection():
         self.surface.fill("white")
 
     def draw(self, x, y, color):
-        if 0 <= x < self.width and 0 <= y + 50 < self.height:  # Adjust the y-coordinate check
-            pygame.draw.circle(self.surface, color, (x, y - 50), 5)  # Add 50 pixels to y-coordinate
+        if 0 <= x < self.width and 0 <= y + 50 < self.height:  # Adjust the y-coordinate  to make it so its on the mouse
+            pygame.draw.circle(self.surface, color, (x, y - 50), 5)
 
     def render(self, target_surface, position):
         target_surface.blit(self.surface, position)
-
-
 
 class combined_wave_subsection():
     def __init__(self, width, height, waves):
@@ -162,7 +159,9 @@ class combined_wave_subsection():
         self.y_scale = self.height / 4
         self.phase_shift = 0
         self.waves = waves
+        self.rolling_fft = RollingFFT(rolling_fft_int)
         self.backround = pygame.image.load("assets/graph.png")
+
     def combined_wave_value(self, x):
         total_value = 0
         for wave in self.waves:
@@ -179,11 +178,31 @@ class combined_wave_subsection():
         max_combined_amplitude = sum([wave.amplitudeModifier for wave in self.waves])
         return (total_value / max_combined_amplitude) * self.y_scale
 
+    def combined_wave_values(self):
+        x_values = np.arange(0, 2.1 * pi, sine_wave_speed_int)
+        return [self.combined_wave_value(x) for x in x_values]
+
     def get_wave_color(self):
-        max_amplitude, _ = self.get_max_min_wave_values()
-        m = 255
-        r, g, b = WavesToColor(max_amplitude, m)
+        wave_values = self.combined_wave_value()
+
+        for val in wave_values:
+            self.rolling_fft.push(val)
+
+        # Compute FFT magnitudes
+        magnitudes = self.rolling_fft.compute_fft_magnitudes()
+
+        # Use magnitudes of specific frequency components to determine RGB
+        r = int(255 * magnitudes[1] / max(magnitudes))
+        g = int(255 * magnitudes[2] / max(magnitudes))
+        b = int(255 * magnitudes[3] / max(magnitudes))
+
+        # Ensure RGB values are within [0, 255]
+        r = max(0, min(255, r))
+        g = max(0, min(255, g))
+        b = max(0, min(255, b))
+
         return (r, g, b)
+
     def draw_combined_wave(self):
         x = 0
         prev_screen_x, prev_screen_y = None, None
