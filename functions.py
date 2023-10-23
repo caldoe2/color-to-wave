@@ -3,23 +3,23 @@ import pygame
 from settings import *
 import numpy as np
 # functions
-def WavesToColor(n, m):
-    rolling_fft.push(n)
-
-    # Compute FFT magnitudes
-    magnitudes = rolling_fft.compute_fft_magnitudes()
-
-    # Use magnitudes of specific frequency components to determine RGB.
-    r = int(255 * magnitudes[1] / max(magnitudes))
-    g = int(255 * magnitudes[2] / max(magnitudes))
-    b = int(255 * magnitudes[3] / max(magnitudes))
-
-    # Ensure RGB values are within [0, 255]
-    r = max(0, min(255, r))
-    g = max(0, min(255, g))
-    b = max(0, min(255, b))
-
-    return (r, g, b)
+# def WavesToColor(n, m):
+#     rolling_fft.push(n)
+#
+#     # Compute FFT magnitudes
+#     magnitudes = rolling_fft.compute_fft_magnitudes()
+#
+#     # Use magnitudes of specific frequency components to determine RGB.
+#     r = int(255 * magnitudes[1] / max(magnitudes))
+#     g = int(255 * magnitudes[2] / max(magnitudes))
+#     b = int(255 * magnitudes[3] / max(magnitudes))
+#
+#     # Ensure RGB values are within [0, 255]
+#     r = max(0, min(255, r))
+#     g = max(0, min(255, g))
+#     b = max(0, min(255, b))
+#
+#     return (r, g, b)
 
 class RollingFFT:
     def __init__(self, size):
@@ -126,13 +126,13 @@ class color_subsection():
 
 
     def draw(self):
-        avg_wave_value = self.combined_wave.get_average_wave_value()
-        color = WavesToColor(avg_wave_value, 255)
+        # avg_wave_value = self.combined_wave.get_average_wave_value()
+        color = self.combined_wave.get_wave_color()
         self.surface.fill(color)
 
     def get_color(self):
         avg_wave_value = self.combined_wave.get_average_wave_value()
-        color = WavesToColor(avg_wave_value, 255)
+        color = self.combined_wave.get_wave_color()
         return color
 
     def render(self, target_surface, position):
@@ -156,8 +156,8 @@ class combined_wave_subsection():
         self.width, self.height = width, height
         self.surface = pygame.Surface((self.width, self.height))
         self.x_scale = self.width / (2.1 * pi)
-        self.y_scale = self.height / 4
-        self.phase_shift = 0
+        self.y_scale = self.height / 6
+        self.phase_shift = 1
         self.waves = waves
         self.rolling_fft = RollingFFT(rolling_fft_int)
         self.backround = pygame.image.load("assets/graph.png")
@@ -183,8 +183,7 @@ class combined_wave_subsection():
         return [self.combined_wave_value(x) for x in x_values]
 
     def get_wave_color(self):
-        wave_values = self.combined_wave_value()
-
+        wave_values = self.combined_wave_values()
         for val in wave_values:
             self.rolling_fft.push(val)
 
@@ -200,7 +199,6 @@ class combined_wave_subsection():
         r = max(0, min(255, r))
         g = max(0, min(255, g))
         b = max(0, min(255, b))
-
         return (r, g, b)
 
     def draw_combined_wave(self):
@@ -210,7 +208,7 @@ class combined_wave_subsection():
         while x <= 2.1 * pi:
             y = self.combined_wave_value(x)
             screen_x = int(x * self.x_scale)
-            screen_y = int(self.height / 6- y)
+            screen_y = int(self.height / 6 - y)
 
             if prev_screen_x is not None:
                 pygame.draw.line(self.surface, (0, 255, 255), (prev_screen_x, prev_screen_y), (screen_x, screen_y))

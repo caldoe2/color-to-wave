@@ -10,7 +10,7 @@ is_drawing = False
 # setting up the waves
 subsection_a = wave_subsection(subsection_a_width_int, subsection_a_hight_int, 1,1, sin)
 subsection_b = wave_subsection(subsection_b_width_int, subsection_b_hight_int,1,1, sin)
-subsection_c = wave_subsection(subsection_c_width_int, subsection_c_hight_int,1,1, cos)
+subsection_c = wave_subsection(subsection_c_width_int, subsection_c_hight_int,1,1, sinx)
 
 combined_wave = combined_wave_subsection(resilution_int[0], resilution_int[1], [subsection_a, subsection_b, subsection_c])
 drawable_subsection = DrawableSubsection(400, 800)
